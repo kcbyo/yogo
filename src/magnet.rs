@@ -99,10 +99,11 @@ impl TryFrom<MagnetContext<'_>> for Magnet {
     type Error = ParseMagnetDateErr;
 
     fn try_from(context: MagnetContext) -> Result<Self, Self::Error> {
+        let date: MagnetDate = context.info.parse()?;
         Ok(Self {
             text: context.text,
             link: context.link.into(),
-            date: context.info.parse::<MagnetDate>()?.into_inner(),
+            date: date.into_inner(),
         })
     }
 }
