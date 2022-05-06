@@ -2,14 +2,16 @@ mod args;
 mod context;
 mod history;
 mod magnet;
+mod wait;
 
-use std::{fmt::Write, fs, io, time::Duration};
+use std::{fmt::Write, fs, io};
 
 use args::Args;
 use context::Context;
 use hashbrown::HashSet;
 use history::History;
 use magnet::Magnet;
+use wait::Waiter;
 
 fn main() {
     let args = Args::parse();
@@ -24,20 +26,17 @@ fn run(args: &Args) -> anyhow::Result<()> {
     let context = Context::new();
     let links = fs::read_to_string(&args.path)?;
 
-    let mut wait = false;
+    let mut waiter = Waiter::new();
     let mut history = History::load()?;
     let mut magnets = Vec::new();
     let mut unique_magnet_filter = HashSet::new();
 
     for url in links.lines() {
-        if wait {
-            std::thread::sleep(Duration::from_millis(750));
-        }
+        waiter.wait();
 
         let mut recent = context.extract_recent(url, &mut unique_magnet_filter)?;
         recent.retain(|magnet| magnet.date >= args.take_after() && history.filter(magnet));
         magnets.extend(recent);
-        wait = true;
     }
 
     write_html(&magnets)?;

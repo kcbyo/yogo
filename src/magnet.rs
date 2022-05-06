@@ -111,7 +111,7 @@ impl TryFrom<MagnetContext<'_>> for Magnet {
         Ok(Self {
             text,
             link: link.into(),
-            size: size.into(),
+            size,
             date: date.into_inner(),
         })
     }
