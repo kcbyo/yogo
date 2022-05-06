@@ -58,11 +58,12 @@ fn write_html(magnets: &[Magnet]) -> io::Result<()> {
 
 fn format_line(buf: &mut String, magnet: &Magnet) {
     let date = magnet.date;
+    let size = &magnet.size;
     let link = &magnet.link;
     let text = &magnet.text;
     writeln!(
         buf,
-        r#"  <li><strong>{date}</strong> <a href="{link}">{text}</a></li>"#
+        r#"  <li><strong>{date} {size}</strong> <a href="{link}">{text}</a></li>"#
     )
     .expect("pretty sure this can't break")
 }

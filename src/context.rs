@@ -1,4 +1,5 @@
 use hashbrown::HashSet;
+use regex::Regex;
 use reqwest::blocking::Client;
 use scraper::{ElementRef, Html, Selector};
 
@@ -12,6 +13,7 @@ pub struct Context {
     page_link_selector: Selector,
     magnet_link_selector: Selector,
     info_selector: Selector,
+    size_pattern: Regex,
 }
 
 impl Context {
@@ -22,6 +24,7 @@ impl Context {
             page_link_selector: Selector::parse("div.detName > a").unwrap(),
             magnet_link_selector: Selector::parse("div.detName + a").unwrap(),
             info_selector: Selector::parse("font").unwrap(),
+            size_pattern: Regex::new(r#"Size ([\d.]+)&nbsp;([^,]+)"#).unwrap(),
         }
     }
 
@@ -40,9 +43,20 @@ impl Context {
         for element in det_elements {
             let link = self.get_magnet_link(&element)?;
             if filter.insert(link.to_string()) {
+                let info = self.get_info(&element)?;
+                let size = self
+                    .size_pattern
+                    .captures(&info)
+                    .ok_or_else(|| ExtractMagnetContextErr::Size(info.to_string()))?;
+
                 let magnet_context = MagnetContext {
                     text: self.get_link_text(&element)?,
                     link: self.get_magnet_link(&element)?,
+                    size: format!(
+                        "{} {}",
+                        size.get(1).unwrap().as_str(),
+                        size.get(2).unwrap().as_str()
+                    ),
                     info: self.get_info(&element)?,
                 };
 

@@ -92,17 +92,26 @@ impl error::Error for ParseMagnetDateErr {}
 pub struct Magnet {
     pub text: String,
     pub link: String,
+    pub size: String,
     pub date: Date<Utc>,
 }
 
 impl TryFrom<MagnetContext<'_>> for Magnet {
     type Error = ParseMagnetDateErr;
 
-    fn try_from(context: MagnetContext) -> Result<Self, Self::Error> {
-        let date: MagnetDate = context.info.parse()?;
+    fn try_from(
+        MagnetContext {
+            text,
+            link,
+            size,
+            info,
+        }: MagnetContext,
+    ) -> Result<Self, Self::Error> {
+        let date: MagnetDate = info.parse()?;
         Ok(Self {
-            text: context.text,
-            link: context.link.into(),
+            text,
+            link: link.into(),
+            size: size.into(),
             date: date.into_inner(),
         })
     }
@@ -114,6 +123,7 @@ impl TryFrom<MagnetContext<'_>> for Magnet {
 pub struct MagnetContext<'a> {
     pub text: String,
     pub link: &'a str,
+    pub size: String,
     pub info: String,
 }
 
@@ -121,6 +131,7 @@ pub struct MagnetContext<'a> {
 pub enum ExtractMagnetContextErr {
     PageLink(String),
     MagnetLink(String),
+    Size(String),
     Info(String),
 }
 
@@ -129,6 +140,7 @@ impl fmt::Display for ExtractMagnetContextErr {
         match self {
             ExtractMagnetContextErr::PageLink(html) => write!(f, "Bad page link:\n{html}"),
             ExtractMagnetContextErr::MagnetLink(html) => write!(f, "Bad magnet link:\n{html}"),
+            ExtractMagnetContextErr::Size(s) => write!(f, "Unable to determine size: {s}"),
             ExtractMagnetContextErr::Info(html) => write!(f, "Bad info:\n{html}"),
         }
     }
