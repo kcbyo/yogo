@@ -13,7 +13,7 @@ pub struct Args {
     /// all after date
     ///
     /// Filters recent uploads by YYYY-MM-DD.
-    after: ArgDate,
+    after: Option<ArgDate>,
 }
 
 impl Args {
@@ -22,11 +22,13 @@ impl Args {
     }
 
     pub fn take_after(&self) -> Date<Utc> {
-        self.after.0
+        self.after
+            .map(|date| date.0)
+            .unwrap_or_else(|| (Utc::now() + chrono::Duration::days(-3)).date())
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 struct ArgDate(Date<Utc>);
 
 impl FromStr for ArgDate {

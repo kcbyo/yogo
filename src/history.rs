@@ -46,7 +46,7 @@ impl PartialEq for Entry {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct History {
     entries: HashSet<Entry>,
 }
@@ -54,6 +54,10 @@ pub struct History {
 impl History {
     pub fn load() -> io::Result<Self> {
         let path = get_history_path()?;
+        if !path.exists() {
+            return Ok(History::default());
+        }
+
         let text = fs::read_to_string(&path)?;
 
         Ok(History {
