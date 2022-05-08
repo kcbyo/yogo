@@ -8,6 +8,7 @@ use std::{
 use chrono::{Date, DateTime, Utc};
 use directories::UserDirs;
 use hashbrown::HashSet;
+use regex::Regex;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::magnet::Magnet;
@@ -25,15 +26,6 @@ struct Entry {
     date: Date<Utc>,
 }
 
-impl Entry {
-    fn new(magnet: &Magnet) -> Self {
-        Self {
-            magnet: magnet.link.clone(),
-            date: magnet.date,
-        }
-    }
-}
-
 impl Hash for Entry {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.magnet.hash(state);
@@ -46,9 +38,10 @@ impl PartialEq for Entry {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct History {
     entries: HashSet<Entry>,
+    hash_pattern: Regex,
 }
 
 impl History {
@@ -62,12 +55,14 @@ impl History {
 
         Ok(History {
             entries: serde_json::from_str(&text)?,
+            ..Default::default()
         })
     }
 
     pub fn filter(&mut self, magnet: &Magnet) -> bool {
-        let candidate = Entry::new(magnet);
-        self.entries.insert(candidate)
+        self.create_entry(magnet)
+            .map(|entry| self.entries.insert(entry))
+            .unwrap_or_default()
     }
 
     pub fn write(&self, limit: Date<Utc>) -> io::Result<()> {
@@ -83,6 +78,23 @@ impl History {
         let mut file = File::create(&new_history)?;
         serde_json::to_writer_pretty(&mut file, &entries)?;
         fs::rename(&new_history, &history)
+    }
+
+    fn create_entry(&self, magnet: &Magnet) -> Option<Entry> {
+        let hash = self.hash_pattern.captures(&magnet.link)?.get(1)?.as_str();
+        Some(Entry {
+            magnet: hash.into(),
+            date: magnet.date,
+        })
+    }
+}
+
+impl Default for History {
+    fn default() -> Self {
+        Self {
+            entries: Default::default(),
+            hash_pattern: Regex::new(r#"btih:([^&]+)"#).unwrap(),
+        }
     }
 }
 
