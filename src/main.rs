@@ -7,30 +7,19 @@ mod wait;
 use std::{fmt::Write, fs, io};
 
 use args::Args;
-use clap::StructOpt;
 use context::Context;
 use hashbrown::HashSet;
 use history::History;
 use magnet::Magnet;
 use wait::Waiter;
 
-// fn main() {
-//     let args = Args::parse();
-
-//     if let Err(e) = run(&args) {
-//         eprintln!("{e}");
-//         std::process::exit(1);
-//     }
-// }
-
 fn main() {
-    let args = args::TestArgs::parse();
-    let entries: Vec<Magnet> = csv::Reader::from_path(&args.path)
-        .unwrap()
-        .deserialize()
-        .filter_map(Result::ok)
-        .collect();
-    write_html(&entries).unwrap();
+    let args = Args::parse();
+
+    if let Err(e) = run(&args) {
+        eprintln!("{e}");
+        std::process::exit(1);
+    }
 }
 
 fn run(args: &Args) -> anyhow::Result<()> {
@@ -50,6 +39,7 @@ fn run(args: &Args) -> anyhow::Result<()> {
         magnets.extend(recent);
     }
 
+    magnets.sort_unstable_by(|a, b| a.text.cmp(&b.text));
     write_html(&magnets)?;
     history.write(args.take_after())?;
 
