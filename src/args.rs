@@ -3,6 +3,12 @@ use std::{error, fmt, str::FromStr};
 use chrono::{Date, TimeZone, Utc};
 use clap::Parser;
 
+#[derive(Debug, Parser)]
+pub struct TestArgs {
+    /// csv input
+    pub path: String,
+}
+
 #[derive(Clone, Debug, Parser)]
 pub struct Args {
     /// config path

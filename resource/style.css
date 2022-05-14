@@ -1,0 +1,30 @@
+body {
+    max-width: max-content;
+    margin: 5rem auto;
+    font-size: 2rem;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    color: rgb(138, 86, 68);
+    background-color: antiquewhite;
+}
+
+p {
+  margin: 0;
+  padding: 0;
+}
+
+div.info {
+    display: flex;
+    margin-bottom: 0.75rem;
+}
+
+div.info p {
+  flex: 1;
+}
+
+div.info p:first-of-type {
+    text-align: left;
+}
+
+div.info p:last-of-type {
+    text-align: right;
+}

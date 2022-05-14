@@ -7,19 +7,30 @@ mod wait;
 use std::{fmt::Write, fs, io};
 
 use args::Args;
+use clap::StructOpt;
 use context::Context;
 use hashbrown::HashSet;
 use history::History;
 use magnet::Magnet;
 use wait::Waiter;
 
-fn main() {
-    let args = Args::parse();
+// fn main() {
+//     let args = Args::parse();
 
-    if let Err(e) = run(&args) {
-        eprintln!("{e}");
-        std::process::exit(1);
-    }
+//     if let Err(e) = run(&args) {
+//         eprintln!("{e}");
+//         std::process::exit(1);
+//     }
+// }
+
+fn main() {
+    let args = args::TestArgs::parse();
+    let entries: Vec<Magnet> = csv::Reader::from_path(&args.path)
+        .unwrap()
+        .deserialize()
+        .filter_map(Result::ok)
+        .collect();
+    write_html(&entries).unwrap();
 }
 
 fn run(args: &Args) -> anyhow::Result<()> {
@@ -46,12 +57,16 @@ fn run(args: &Args) -> anyhow::Result<()> {
 }
 
 fn write_html(magnets: &[Magnet]) -> io::Result<()> {
+    static STYLE: &str = include_str!("../resource/style.css");
+
     let mut buf = String::new();
-    buf += "<ul>\n";
-    magnets
+    writeln!(buf, "<style>\n{STYLE}\n</style>").expect("no way can this break");
+
+    writeln!(buf, "<body>").unwrap();
+    dbg!(magnets)
         .iter()
         .for_each(|magnet| format_line(&mut buf, magnet));
-    buf += "</ul>\n";
+    writeln!(buf, "</body>").unwrap();
     fs::write("listing.html", &buf)
 }
 
@@ -60,9 +75,14 @@ fn format_line(buf: &mut String, magnet: &Magnet) {
     let size = &magnet.size;
     let link = &magnet.link;
     let text = &magnet.text;
+
     writeln!(
         buf,
-        r#"  <li><strong>{date} {size}</strong> <a href="{link}">{text}</a></li>"#
+        include_str!("../resource/template.html"),
+        date = date,
+        size = size,
+        link = link,
+        text = text,
     )
-    .expect("pretty sure this can't break")
+    .unwrap()
 }

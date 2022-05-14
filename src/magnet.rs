@@ -1,6 +1,7 @@
 use std::{error, fmt, num::ParseIntError, str::FromStr};
 
 use chrono::{Date, Datelike, Duration, TimeZone, Utc};
+use serde::Deserialize;
 
 #[derive(Debug)]
 struct MagnetDate(Date<Utc>);
@@ -88,12 +89,18 @@ impl error::Error for ParseMagnetDateErr {}
 /// A magnet link
 ///
 /// This object is constructed based on a MagnetContext.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Magnet {
     pub text: String,
     pub link: String,
     pub size: String,
+    #[serde(deserialize_with = "datetime_as_date")]
     pub date: Date<Utc>,
+}
+
+fn datetime_as_date<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Date<Utc>, D::Error> {
+    let datetime: chrono::DateTime<Utc> = serde::Deserialize::deserialize(d)?;
+    Ok(datetime.date())
 }
 
 impl TryFrom<MagnetContext<'_>> for Magnet {
