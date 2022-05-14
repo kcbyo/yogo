@@ -53,7 +53,7 @@ fn write_html(magnets: &[Magnet]) -> io::Result<()> {
     writeln!(buf, "<style>\n{STYLE}\n</style>").expect("no way can this break");
 
     writeln!(buf, "<body>").unwrap();
-    dbg!(magnets)
+    magnets
         .iter()
         .for_each(|magnet| format_line(&mut buf, magnet));
     writeln!(buf, "</body>").unwrap();
