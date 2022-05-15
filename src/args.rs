@@ -13,7 +13,12 @@ pub struct Args {
     /// all after date
     ///
     /// Filters recent uploads by YYYY-MM-DD.
+    #[clap(short = 'd', long = "date")]
     after: Option<ArgDate>,
+
+    /// output path
+    #[clap(short, long)]
+    output: Option<String>,
 }
 
 impl Args {
@@ -25,6 +30,10 @@ impl Args {
         self.after
             .map(|date| date.0)
             .unwrap_or_else(|| (Utc::now() + chrono::Duration::days(-3)).date())
+    }
+
+    pub fn output(&self) -> Option<&str> {
+        self.output.as_deref()
     }
 }
 

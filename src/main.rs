@@ -40,13 +40,13 @@ fn run(args: &Args) -> anyhow::Result<()> {
     }
 
     magnets.sort_unstable_by(|a, b| a.text.cmp(&b.text));
-    write_html(&magnets)?;
+    write_html(args, &magnets)?;
     history.write(args.take_after())?;
 
     Ok(())
 }
 
-fn write_html(magnets: &[Magnet]) -> io::Result<()> {
+fn write_html(args: &Args, magnets: &[Magnet]) -> io::Result<()> {
     static STYLE: &str = include_str!("../resource/style.css");
 
     let mut buf = String::new();
@@ -57,7 +57,11 @@ fn write_html(magnets: &[Magnet]) -> io::Result<()> {
         .iter()
         .for_each(|magnet| format_line(&mut buf, magnet));
     writeln!(buf, "</body>").unwrap();
-    fs::write("listing.html", &buf)
+
+    match args.output() {
+        Some(path) => fs::write(path, &buf),
+        None => fs::write("listing.html", &buf),
+    }
 }
 
 fn format_line(buf: &mut String, magnet: &Magnet) {
