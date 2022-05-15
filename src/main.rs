@@ -11,6 +11,7 @@ use context::Context;
 use hashbrown::HashSet;
 use history::History;
 use magnet::Magnet;
+use unicase::UniCase;
 use wait::Waiter;
 
 fn main() {
@@ -39,7 +40,7 @@ fn run(args: &Args) -> anyhow::Result<()> {
         magnets.extend(recent);
     }
 
-    magnets.sort_unstable_by(|a, b| a.text.cmp(&b.text));
+    magnets.sort_unstable_by(|a, b| UniCase::new(&a.text).cmp(&UniCase::new(&b.text)));
     write_html(args, &magnets)?;
     history.write(args.take_after())?;
 
