@@ -21,6 +21,8 @@ use wait::Waiter;
 // than some default number of days (which is equal to the number of days in the database). At
 // least I think that's how it's meant to work, so what gives?
 
+// If you peek into the history code, you'll see I've attempted to fix this by adding more slack.
+
 fn main() {
     let args = Args::parse();
 
