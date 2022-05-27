@@ -14,6 +14,13 @@ use magnet::Magnet;
 use unicase::UniCase;
 use wait::Waiter;
 
+// FIXME: We need to keep records around until they aren't found on the first page or for three
+// days, whichever comes first. (Bug reported 26 May 2022.)
+
+// Ok, yeah, I've seen the symptom, but the code is *supposed* to filter out anything that's older
+// than some default number of days (which is equal to the number of days in the database). At
+// least I think that's how it's meant to work, so what gives?
+
 fn main() {
     let args = Args::parse();
 
