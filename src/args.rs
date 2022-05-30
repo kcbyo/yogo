@@ -19,6 +19,9 @@ pub struct Args {
     /// output path
     #[clap(short, long)]
     output: Option<String>,
+
+    /// wait time between requests
+    pub wait: Option<u64>,
 }
 
 impl Args {

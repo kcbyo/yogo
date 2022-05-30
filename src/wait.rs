@@ -1,34 +1,38 @@
-use std::time::{Duration, Instant};
+use std::{
+    thread,
+    time::{Duration, Instant},
+};
 
 const DEFAULT_WAIT_TIME: u64 = 500;
 
 #[derive(Clone, Debug)]
 pub struct Waiter {
     duration: Duration,
-    epoch: Instant,
-    should_wait: bool,
+    epoch: Option<Instant>,
 }
 
 impl Waiter {
     pub fn new() -> Self {
-        Waiter {
-            duration: Duration::from_millis(DEFAULT_WAIT_TIME),
-            epoch: Instant::now(),
-            should_wait: false,
+        Self::with_wait(DEFAULT_WAIT_TIME)
+    }
+
+    pub fn with_wait(time_in_milliseconds: u64) -> Self {
+        Self {
+            duration: Duration::from_millis(time_in_milliseconds),
+            epoch: None,
         }
     }
 
     pub fn wait(&mut self) {
-        if self.should_wait {
+        if let Some(epoch) = self.epoch.take() {
             let now = Instant::now();
-            let diff = now - self.epoch;
+            let diff = now - epoch;
             if diff < self.duration {
-                std::thread::sleep(self.duration - diff);
+                thread::sleep(self.duration - diff);
             }
-        } else {
-            self.should_wait = true;
         }
-        self.epoch = Instant::now();
+
+        self.epoch = Some(Instant::now());
     }
 }
 

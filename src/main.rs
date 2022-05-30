@@ -36,7 +36,7 @@ fn run(args: &Args) -> anyhow::Result<()> {
     let context = Context::new();
     let links = fs::read_to_string(&args.path)?;
 
-    let mut waiter = Waiter::new();
+    let mut waiter = args.wait.map(Waiter::with_wait).unwrap_or_default();
     let mut history = History::load()?;
     let mut magnets = Vec::new();
     let mut unique_magnet_filter = HashSet::new();

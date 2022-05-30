@@ -5,7 +5,7 @@ use std::{
     path::PathBuf,
 };
 
-use chrono::{Date, DateTime, Utc, Duration};
+use chrono::{Date, DateTime, Duration, Utc};
 use directories::UserDirs;
 use hashbrown::HashSet;
 use regex::Regex;
@@ -70,7 +70,7 @@ impl History {
         // history items a *full day* beyond the filter date. This is on the assumption that there
         // is some kind of day/hour tomfoolishness going on. Adding some slack here will cost
         // almost nothing and potentially solve this issue without any further research required.
-        
+
         let slack_date = safe_decrement_limit(limit);
         let entries: HashSet<_> = self
             .entries
