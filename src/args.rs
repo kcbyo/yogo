@@ -21,6 +21,7 @@ pub struct Args {
     output: Option<String>,
 
     /// wait time between requests
+    #[clap(short, long)]
     pub wait: Option<u64>,
 }
 
