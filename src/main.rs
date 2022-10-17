@@ -14,19 +14,8 @@ use magnet::Magnet;
 use unicase::UniCase;
 use wait::Waiter;
 
-// FIXME: We need to keep records around until they aren't found on the first page or for three
-// days, whichever comes first. (Bug reported 26 May 2022.)
-
-// Ok, yeah, I've seen the symptom, but the code is *supposed* to filter out anything that's older
-// than some default number of days (which is equal to the number of days in the database). At
-// least I think that's how it's meant to work, so what gives?
-
-// If you peek into the history code, you'll see I've attempted to fix this by adding more slack.
-
 fn main() {
-    let args = Args::parse();
-
-    if let Err(e) = run(&args) {
+    if let Err(e) = run(&Args::parse()) {
         eprintln!("{e}");
         std::process::exit(1);
     }
@@ -42,9 +31,13 @@ fn run(args: &Args) -> anyhow::Result<()> {
     let mut unique_magnet_filter = HashSet::new();
 
     for url in links.lines() {
-        waiter.wait();
+        let mut recent = context.extract_recent(
+            url,
+            args.page_limit(),
+            &mut unique_magnet_filter,
+            &mut waiter,
+        )?;
 
-        let mut recent = context.extract_recent(url, &mut unique_magnet_filter)?;
         recent.retain(|magnet| magnet.date >= args.take_after() && history.filter(magnet));
         magnets.extend(recent);
     }

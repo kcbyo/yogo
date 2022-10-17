@@ -4,6 +4,7 @@ use chrono::{Date, TimeZone, Utc};
 use clap::Parser;
 
 #[derive(Clone, Debug, Parser)]
+#[command(version)]
 pub struct Args {
     /// config path
     ///
@@ -13,15 +14,21 @@ pub struct Args {
     /// all after date
     ///
     /// Filters recent uploads by YYYY-MM-DD.
-    #[clap(short = 'd', long = "date")]
+    #[arg(short = 'd', long = "date")]
     after: Option<ArgDate>,
 
     /// output path
-    #[clap(short, long)]
+    #[arg(short, long)]
     output: Option<String>,
 
+    /// page limit
+    ///
+    /// Limits the number of pages the program will review for a given subscription.
+    #[arg(short, long)]
+    pages: Option<usize>,
+
     /// wait time between requests
-    #[clap(short, long)]
+    #[arg(short, long)]
     pub wait: Option<u64>,
 }
 
@@ -38,6 +45,10 @@ impl Args {
 
     pub fn output(&self) -> Option<&str> {
         self.output.as_deref()
+    }
+
+    pub fn page_limit(&self) -> usize {
+        self.pages.unwrap_or(3)
     }
 }
 

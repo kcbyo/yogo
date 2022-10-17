@@ -3,9 +3,69 @@ use regex::Regex;
 use reqwest::blocking::Client;
 use scraper::{ElementRef, Html, Selector};
 
-use crate::magnet::{ExtractMagnetContextErr, Magnet, MagnetContext};
+use crate::{
+    magnet::{ExtractMagnetContextErr, Magnet, MagnetContext},
+    wait::Waiter,
+};
 
-static USER_AGENT: &str = "Mozilla/5.0 (X11; Linux x86_64; rv:99.0) Gecko/20100101 Firefox/99.0";
+static USER_AGENT: &str = "Mozilla/5.0 (X11; Linux x86_64; rv:105.0) Gecko/20100101 Firefox/105.0";
+
+trait LinkBuilder {
+    fn link(&self, page: usize) -> String;
+}
+
+struct SearchLinkBuilder {
+    query: String,
+}
+
+impl LinkBuilder for SearchLinkBuilder {
+    fn link(&self, page: usize) -> String {
+        // https://thepiratebay10.org/search/James%20Deen/1/3/0
+
+        // The path segment "3" refers to sorting by upload date.
+        // The last path segment refers to the search category.
+
+        let query = &self.query;
+        format!("https://thepiratebay10.org/search/{query}/{page}/3/0")
+    }
+}
+
+struct UserLinkBuilder {
+    user: String,
+}
+
+impl LinkBuilder for UserLinkBuilder {
+    fn link(&self, page: usize) -> String {
+        // https://thepiratebay10.org/user/PornBaker/2/3
+
+        // Note the absence of the search category from above.
+
+        let user = &self.user;
+        format!("https://thepiratebay10.org/user/{user}/{page}/3")
+    }
+}
+
+fn link_builder(url: &str) -> Option<Box<dyn LinkBuilder>> {
+    let search = Regex::new(r#"/search/([^/]+)/"#).unwrap();
+    if let Some(cx) = search.captures(url) {
+        return cx.get(1).map(|cx| {
+            Box::new(SearchLinkBuilder {
+                query: cx.as_str().into(),
+            }) as Box<dyn LinkBuilder>
+        });
+    }
+
+    let user = Regex::new(r#"/user/([^/]+)/"#).unwrap();
+    if let Some(cx) = user.captures(url) {
+        return cx.get(1).map(|cx| {
+            Box::new(UserLinkBuilder {
+                user: cx.as_str().into(),
+            }) as Box<dyn LinkBuilder>
+        });
+    }
+
+    None
+}
 
 pub struct Context {
     client: Client,
@@ -31,36 +91,54 @@ impl Context {
     pub fn extract_recent(
         &self,
         url: &str,
+        limit: usize,
         filter: &mut HashSet<String>,
+        waiter: &mut Waiter,
     ) -> anyhow::Result<Vec<Magnet>> {
+        // We need to begin pagination with 1 or there's going to be weirdness.
+        let pages = 1..=limit;
+        let links = link_builder(url).ok_or_else(|| {
+            std::io::Error::new(
+                std::io::ErrorKind::Unsupported,
+                format!("unsupported url: {url}"),
+            )
+        })?;
+
+        let page_links = pages.map(|page| links.link(page));
+
         let mut magnets = Vec::new();
-        let text = self.client.get(url).send()?.text()?;
-        let document = Html::parse_fragment(&text);
-        let det_elements = document
-            .select(&self.det_selector)
-            .filter_map(|element| ElementRef::wrap(element.parent()?));
 
-        for element in det_elements {
-            let link = self.get_magnet_link(&element)?;
-            if filter.insert(link.to_string()) {
-                let info = self.get_info(&element)?;
-                let size = self
-                    .size_pattern
-                    .captures(&info)
-                    .ok_or_else(|| ExtractMagnetContextErr::Size(info.to_string()))?;
+        for url in page_links {
+            waiter.wait();
 
-                let magnet_context = MagnetContext {
-                    text: self.get_link_text(&element)?,
-                    link: self.get_magnet_link(&element)?,
-                    size: format!(
-                        "{} {}",
-                        size.get(1).unwrap().as_str(),
-                        size.get(2).unwrap().as_str()
-                    ),
-                    info: self.get_info(&element)?,
-                };
+            let text = self.client.get(url).send()?.text()?;
+            let document = Html::parse_fragment(&text);
+            let det_elements = document
+                .select(&self.det_selector)
+                .filter_map(|element| ElementRef::wrap(element.parent()?));
 
-                magnets.push(magnet_context.try_into()?);
+            for element in det_elements {
+                let link = self.get_magnet_link(&element)?;
+                if filter.insert(link.to_string()) {
+                    let info = self.get_info(&element)?;
+                    let size = self
+                        .size_pattern
+                        .captures(&info)
+                        .ok_or_else(|| ExtractMagnetContextErr::Size(info.to_string()))?;
+
+                    let magnet_context = MagnetContext {
+                        text: self.get_link_text(&element)?,
+                        link: self.get_magnet_link(&element)?,
+                        size: format!(
+                            "{} {}",
+                            size.get(1).unwrap().as_str(),
+                            size.get(2).unwrap().as_str()
+                        ),
+                        info: self.get_info(&element)?,
+                    };
+
+                    magnets.push(magnet_context.try_into()?);
+                }
             }
         }
 

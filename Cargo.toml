@@ -1,19 +1,19 @@
 [package]
 name = "yogo"
-version = "0.3.5"
+version = "0.4.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.57"
-chrono = { version = "0.4.19", features = ["serde"] }
-clap = { version = "3.1.18", features = ["derive"] }
+anyhow = "1.0.65"
+chrono = { version = "0.4.22", features = ["serde"] }
+clap = { version = "4.0.15", features = ["derive"] }
 directories = "4.0.1"
-hashbrown = { version = "0.12.1", features = ["serde"] }
-regex = "1.5.6"
-reqwest = { version = "0.11.10", features = ["blocking"] }
+hashbrown = { version = "0.12.3", features = ["serde"] }
+regex = "1.6.0"
+reqwest = { version = "0.11.12", features = ["blocking"] }
 scraper = "0.13.0"
-serde = { version = "1.0.137", features = ["derive"] }
-serde_json = "1.0.81"
+serde = { version = "1.0.145", features = ["derive"] }
+serde_json = "1.0.86"
 unicase = "2.6.0"
