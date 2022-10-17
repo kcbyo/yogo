@@ -46,7 +46,7 @@ impl LinkBuilder for UserLinkBuilder {
 }
 
 fn link_builder(url: &str) -> Option<Box<dyn LinkBuilder>> {
-    let search = Regex::new(r#"/search/([^/]+)/"#).unwrap();
+    let search = Regex::new(r#"/search/([^/]+)"#).unwrap();
     if let Some(cx) = search.captures(url) {
         return cx.get(1).map(|cx| {
             Box::new(SearchLinkBuilder {
@@ -55,7 +55,7 @@ fn link_builder(url: &str) -> Option<Box<dyn LinkBuilder>> {
         });
     }
 
-    let user = Regex::new(r#"/user/([^/]+)/"#).unwrap();
+    let user = Regex::new(r#"/user/([^/]+)"#).unwrap();
     if let Some(cx) = user.captures(url) {
         return cx.get(1).map(|cx| {
             Box::new(UserLinkBuilder {
